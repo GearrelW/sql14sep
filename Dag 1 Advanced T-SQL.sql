@@ -115,3 +115,81 @@ ORDER BY c.LastName DESC
 GO
 
 SELECT * FROM SalesLT.KorteNamenOrders
+
+
+-- -------------------------------------------
+-- Uitstapje: gebruik CROSS JOIN voor testdata
+SELECT 
+	c1.FirstName
+	, c2.LastName 
+INTO SalesLt.Roel		-- 👈 maak nieuwe tabel
+FROM SalesLT.Customer AS c1
+CROSS JOIN SalesLT.Customer AS c2;
+
+SELECT * FROM SalesLT.Roel;
+
+-- --------------------------------------------------------
+GO
+
+CREATE OR ALTER VIEW DrieDuursteProducten
+AS
+SELECT TOP (3) WITH TIES
+	p.Name
+	, p.ListPrice
+FROM SalesLT.Product AS p
+ORDER BY p.ListPrice DESC;
+
+
+GO
+
+-- -------------------------------------------------------------------
+-- TVF = Table Valued Function = Een functie die een tabel retourneert
+
+GO
+
+CREATE OR ALTER FUNCTION NDuursteProducten
+(@aantal AS int)
+RETURNS table
+AS
+RETURN
+SELECT TOP (@aantal) WITH TIES
+	p.Name
+	, p.ListPrice
+FROM SalesLT.Product AS p
+ORDER BY p.ListPrice DESC;
+
+GO
+ 
+SELECT * FROM NDuursteProducten(6);
+
+-- DERIVED TABLE is een subquery achter de FROM
+
+-- Per categorie id de gemiddelde prijs van de producten
+SELECT 
+	TOP 3 *
+FROM
+(
+SELECT 
+	ProductCategoryID
+	, AVG(ListPrice) AS gemiddeldePrijs
+FROM SalesLT.Product
+GROUP BY ProductCategoryID
+) AS GemiddeldePrijsPerCategorie
+ORDER BY gemiddeldePrijs;
+
+-- De derived table query herschreven naar een 
+-- WITH-statement 
+-- ook wel CTE (Common Table Expression) genoemd
+WITH GemiddeldePrijsPerCategorie
+AS
+(
+	SELECT 
+		ProductCategoryID
+		, AVG(ListPrice) AS gemiddeldePrijs
+	FROM SalesLT.Product
+	GROUP BY ProductCategoryID
+)
+SELECT 
+	TOP 3 *
+FROM GemiddeldePrijsPerCategorie AS gppp
+ORDER BY gppp.gemiddeldePrijs
