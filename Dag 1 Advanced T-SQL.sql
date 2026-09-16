@@ -192,4 +192,50 @@ AS
 SELECT 
 	TOP 3 *
 FROM GemiddeldePrijsPerCategorie AS gppp
-ORDER BY gppp.gemiddeldePrijs
+ORDER BY gppp.gemiddeldePrijs;
+
+-- ------------------------------------------------------
+-- Nogmaals Derived Table
+SELECT 
+	* 
+FROM
+(
+	SELECT 
+		sod.SalesOrderID
+		, sod.OrderQty * sod.UnitPrice * (1 - sod.UnitPriceDiscount) AS RegelTotaal
+	FROM SalesLT.SalesOrderDetail sod
+) AS orderRegelTotalen;
+
+
+SELECT 
+	SalesOrderId
+	, SUM(RegelTotaal)	AS OrderTotaal
+FROM
+(
+	SELECT 
+		sod.SalesOrderID
+		, sod.OrderQty * sod.UnitPrice * (1 - sod.UnitPriceDiscount) AS RegelTotaal
+	FROM SalesLT.SalesOrderDetail sod
+) AS orderRegelTotalen
+GROUP BY SalesOrderID
+HAVING SUM(RegelTotaal) >= 30000;
+
+-- ------------------------------------------------------
+-- Nu weer als WITH-statement
+
+WITH OrderRegelTotaal
+AS
+(
+	SELECT 
+		sod.SalesOrderID
+		, sod.OrderQty * sod.UnitPrice * (1 - sod.UnitPriceDiscount) AS RegelTotaal
+	FROM SalesLT.SalesOrderDetail sod
+) 
+SELECT
+	SalesOrderId
+	, SUM(RegelTotaal)	AS OrderTotaal		-- SUM, AVG, MIN, MAX, COUNT moeten NIET in de GROUP BY
+FROM OrderRegelTotaal		-- 👈 core query
+GROUP BY SalesOrderID
+HAVING SUM(RegelTotaal) >= 30000;
+
+
